@@ -1,0 +1,12 @@
+num_tokens: 23
+dim: 128
+depth: 4
+narrow_conv_kernel: 3
+wide_conv_kernel: 5
+wide_conv_dilation: 3
+attn_heads: 4
+attn_dim_head: 32
+local_self_attn: True
+output_attentions: True
+output_hidden_states: False
+

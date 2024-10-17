@@ -180,6 +180,15 @@ class IntactDataModule(LightningDataModule):
         """Things to do when loading checkpoint."""
         pass
 
+    # def collate_fn(self, protein_batch):
+    #     """
+    #     Use PyG's Batch class to combine protein graphs into a batch.
+    #     """
+    
+    #     # Use the Batch.from_data_list method to automatically handle batch creation.
+    #     batch = Batch.from_data_list(protein_batch)
+    
+    #     return batch
     def collate_fn(self, protein_batch):
         max_size = max([protein.seq.shape[0] for protein in protein_batch])
     
@@ -198,6 +207,7 @@ class IntactDataModule(LightningDataModule):
             batch = Data(
                 seq=torch.stack([_maybe_pad(protein.seq, max_size, 0) for protein in protein_batch]),
                 mut_seq=torch.stack([_maybe_pad(protein.mut_seq, max_size, 0) for protein in protein_batch]),
+                mut_index=torch.tensor([protein.mut_index for protein in protein_batch]),
                 mask=torch.stack([_maybe_pad(protein.mask, max_size, 0) for protein in protein_batch]),
                 target_static=torch.stack([_maybe_pad(protein.target_static, max_size, 0) for protein in protein_batch]),
                 target_label=torch.tensor([protein.target_label for protein in protein_batch])
@@ -223,6 +233,7 @@ class IntactDataModule(LightningDataModule):
             batch = Data(
                 seq=torch.stack([_maybe_pad(protein.seq, max_size, 0) for protein in protein_batch]),
                 mut_seq=torch.stack([_maybe_pad(protein.mut_seq, max_size, 0) for protein in protein_batch]),
+                mut_index=torch.tensor([protein.mut_index for protein in protein_batch]),
                 mask=torch.stack([_maybe_pad(protein.mask, max_size, 0) for protein in protein_batch]),
                 align_mask=torch.stack([_maybe_pad(protein.align_mask, max_size, 0) for protein in protein_batch]),
                 edge_index=edge_index,  # No offset

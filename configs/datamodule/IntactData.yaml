@@ -1,0 +1,15 @@
+_target_: src.datamodules.intact_datamodule.IntactDataModule
+
+mode: 'str-str'
+data_dir: ${paths.data_dir}
+intact_filtered_entries: "intact_filtered_entries.pkl"
+pdb_filename: "pdbs"
+cache_filename: "dataset_cache"
+force_process_data: False
+cache_processed_data: True
+
+mask_prob: 0.1   
+data_split: [0.8, 0.1, 0.1]
+batch_size: 1
+num_workers: 8
+pin_memory: False

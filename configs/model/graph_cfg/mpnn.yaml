@@ -1,0 +1,6 @@
+lm_hidden_size: 32
+node_feat_channels: 32
+edge_feat_channels: 32
+atten_heads: 4
+dropout_rate: 0.1
+num_layers: 2

@@ -184,7 +184,10 @@ class IntactDataset(Dataset):
     def get_align_mask(self, uniprot_sequence, pdb_sequence, alignment):
         """Generate a mask to indicate which residues in UniProt sequence are in the PDB sequence."""
         mask = np.zeros(len(uniprot_sequence), dtype=np.float32)
-    
+
+        if not alignment:
+            return mask
+            
         uniprot_aligned, pdb_aligned, score, begin, end = alignment
         
         pdb_idx = 0  

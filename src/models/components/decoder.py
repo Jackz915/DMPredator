@@ -26,21 +26,26 @@ class BertGNNDecoder(nn.Module):
         edge_index = batch.edge_index  
         edge_attr = batch.edge_attr
         batch_edge_labels = batch.batch_edge_labels  
+
+        if edge_attr.numel() == 0:  
+            dist_loss = torch.zeros(1, device=batch_node_feats.device, requires_grad=True)
+            return aa_out, statics_out, effect_out, dilat_res2d_output, aa_loss, statics_loss, effect_loss, dist_loss
+            
+        else:
+            predicted_distances = []
         
-        predicted_distances = []
-        
-        for i in range(dilat_res2d_output.size(0)):  
-            current_batch_edge_index = edge_index[:, batch_edge_labels == i]  
-            pred_dist = dilat_res2d_output[i, :, current_batch_edge_index[0], current_batch_edge_index[1]]  
-            predicted_distances.append(pred_dist)
-        
-        predicted_distances = torch.cat(predicted_distances, dim=1).view(-1, self.num_bins)
-        
-        dist_loss = self.cross_entropy_loss(
-            predicted_distances,  
-            edge_attr.squeeze().long()  
-        )
-        
+            for i in range(dilat_res2d_output.size(0)):  
+                current_batch_edge_index = edge_index[:, batch_edge_labels == i]  
+                pred_dist = dilat_res2d_output[i, :, current_batch_edge_index[0], current_batch_edge_index[1]]  
+                predicted_distances.append(pred_dist)
+            
+            predicted_distances = torch.cat(predicted_distances, dim=1).view(-1, self.num_bins)
+            
+            dist_loss = self.cross_entropy_loss(
+                predicted_distances,  
+                edge_attr.squeeze().long()  
+            )
+
         return aa_out, statics_out, effect_out, dilat_res2d_output, aa_loss, statics_loss, effect_loss, dist_loss
 
         

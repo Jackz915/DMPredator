@@ -1,0 +1,4 @@
+init_channels: 32
+num_bins: 6
+dilation_rates: [1, 2, 3, 4]
+num_residual_blocks: 2

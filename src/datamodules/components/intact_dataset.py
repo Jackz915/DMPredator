@@ -175,12 +175,6 @@ class IntactDataset(Dataset):
         data.mask = mask
         return data
 
-    def pad_pdb_aligned(self, uniprot_aligned, pdb_aligned):
-        """Pad pdb_aligned with gaps at the end to match the length of uniprot_aligned."""
-        if len(pdb_aligned) < len(uniprot_aligned):
-            pdb_aligned += '-' * (len(uniprot_aligned) - len(pdb_aligned))
-        return pdb_aligned
-
     def get_align_mask(self, uniprot_sequence, pdb_sequence, alignment):
         """Generate a mask to indicate which residues in UniProt sequence are in the PDB sequence."""
         mask = np.zeros(len(uniprot_sequence), dtype=np.float32)
@@ -228,9 +222,15 @@ class IntactDataset(Dataset):
     
         seq_one_hot = data.seq.clone()  
         original_aa_code = self.AA_dict[original_aa]
-    
+
+        if position > seq_one_hot.shape[0]:
+            data.mut_seq = seq_one_hot
+            data.mut_index = 0
+            return data
+            
         if seq_one_hot[position - 1].argmax().item() != original_aa_code:
             data.mut_seq = seq_one_hot
+            data.mut_index = 0
             return data
             #raise ValueError(f"Original amino acid at position {position} does not match the mutation {original_aa}")
     
@@ -240,6 +240,7 @@ class IntactDataset(Dataset):
         mut_seq[position - 1][mutated_aa_code] = 1 
     
         data.mut_seq = mut_seq
+        data.mut_index = position - 1
         return data
 
     def get_label(self, data, label):

@@ -1,0 +1,9 @@
+num_classes_aa: 23
+num_classes_statics: 26
+num_classes_effect: 4
+num_bins: 6
+
+aa_loss_weight: 1.
+statics_loss_weight: 1.
+effect_loss_weight: 1.
+dist_loss_weight: 1.

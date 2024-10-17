@@ -94,31 +94,16 @@ class SeqStructureMultiTaskModel(LightningModule):
 
 
     def construct_interaction_tensor(self, node_feat: torch.Tensor):
-        """Construct pairwise feature tensor, optimized to reduce memory usage but with full output shape."""
-        new_node_feat = node_feat.permute(0, 2, 1)  # [batch_size, hidden_dim, seq_length]
+        new_node_feat = node_feat.permute(0,2,1)
         seq_pad_len = node_feat.shape[1]
-    
-        # Pre-allocate interaction tensor for the upper triangle
-        triu_idx_i, triu_idx_j = torch.triu_indices(seq_pad_len, seq_pad_len, offset=1)
-    
-        # Gather features from the upper triangular part
-        interact_feat_i = new_node_feat[:, :, triu_idx_i]  # [batch_size, hidden_dim, num_pairs]
-        interact_feat_j = new_node_feat[:, :, triu_idx_j]  # [batch_size, hidden_dim, num_pairs]
-    
-        # Concatenate the two feature sets along the channel dimension
-        interact_upper = torch.cat((interact_feat_i, interact_feat_j), dim=1)  # [batch_size, 2*hidden_dim, num_pairs]
-    
-        # Now reconstruct the full tensor by placing upper triangle values in their positions
-        interact_tensor = torch.zeros(
-            (node_feat.shape[0], 2 * new_node_feat.shape[1], seq_pad_len, seq_pad_len),
-            device=node_feat.device
-        )
-    
-        interact_tensor[:, :, triu_idx_i, triu_idx_j] = interact_upper  # Assign upper triangular values
-    
-        # Mirror the upper triangular values to the lower triangle
-        interact_tensor[:, :, triu_idx_j, triu_idx_i] = interact_upper  # For symmetry
-    
+        # interact_tensor size [batch_size,2*hidden_dim,seq_length,seq_length]
+        interact_tensor = torch.cat((torch.repeat_interleave(new_node_feat.unsqueeze(3), repeats=seq_pad_len, dim=3),
+                                    torch.repeat_interleave(new_node_feat.unsqueeze(2), repeats=seq_pad_len, dim=2)), dim=1)
+        interact_tensor_t = interact_tensor.transpose(2,3) # sharing its underlying storage with the input tensor (since input is strided tensor)
+        triu_idx_i,triu_idx_j =  torch.triu_indices(seq_pad_len, seq_pad_len, 1)
+        interact_tensor_t[:,:,triu_idx_i,triu_idx_j] = interact_tensor[:,:,triu_idx_i,triu_idx_j] # interact_tensor is also changed
+        interact_tensor.to(node_feat.device)
+        #assert (interact_tensor.transpose(2,3) == interact_tensor).all() == True
         return interact_tensor
 
         
@@ -207,7 +192,6 @@ class SeqStructureMultiTaskModel(LightningModule):
         for metric_name, metric in metrics_dict.items():
             if metric_name.startswith(phase):
                 if metric._update_count == 0:  
-                    # log.warning(f"{metric_name} 的 `update` 尚未调用，跳过 `compute`。")
                     continue
                 self.log(metric_name, metric.compute(), sync_dist=True)
 
